@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spirits List QR Code</title>
+<style>
+body{margin:0;padding:30px 16px;font:16px/1.4 Georgia,serif;text-align:center;background:#faf6ef;color:#2a1f14}
+h1{margin:0 0 6px;font-size:28px}p{color:#7a6a58;margin:0 0 20px}
+#qr{display:inline-block;background:#fff;padding:18px;border-radius:14px}
+#qr img,#qr canvas{display:block;max-width:100%}
+small{display:block;margin-top:16px;color:#7a6a58;word-break:break-all}
+a.btn{display:inline-block;margin-top:14px;padding:10px 18px;border-radius:999px;background:#a85d12;color:#fff;text-decoration:none}
+</style>
+</head>
+<body>
+<h1>Scan for our Spirits List</h1>
+<p>Point your phone camera at the code</p>
+<div id="qr"></div>
+<small id="u"></small>
+<a class="btn" id="dl" download="spirits-list-qr.png" href="#">Download PNG</a>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+// Points at the folder this page lives in, i.e. your index.html list.
+// To force a specific address (e.g. a custom domain), replace the next line with: const LIST_URL="https://yourdomain.com/";
+const LIST_URL=new URL("./",location.href).href;
+document.getElementById("u").textContent=LIST_URL;
+new QRCode(document.getElementById("qr"),{text:LIST_URL,width:320,height:320,correctLevel:QRCode.CorrectLevel.M});
+setTimeout(()=>{const c=document.querySelector("#qr canvas");if(c)document.getElementById("dl").href=c.toDataURL("image/png")},300);
+</script>
+</body>
+</html>

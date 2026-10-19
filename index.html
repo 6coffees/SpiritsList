@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Spirits List</title>
+<style>
+:root{--bg:#faf6ef;--card:#fff;--ink:#2a1f14;--mut:#7a6a58;--acc:#a85d12;--line:#e6dccb;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17110b;--card:#221a12;--ink:#f3e8d6;--mut:#a8977f;--acc:#e0933f;--line:#3a2e20;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#17110b;--card:#221a12;--ink:#f3e8d6;--mut:#a8977f;--acc:#e0933f;--line:#3a2e20;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 Georgia,"Times New Roman",serif}
+header{padding:28px 18px 8px;text-align:center}
+h1{margin:0;font-size:30px;letter-spacing:.04em}
+header p{margin:6px 0 0;color:var(--mut);font-size:14px}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);padding:10px 14px;z-index:5;border-bottom:1px solid var(--line)}
+input{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font:inherit}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-top:8px}
+.chips button{flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:6px 14px;font:inherit;font-size:14px}
+.chips button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+main{max-width:640px;margin:0 auto;padding:0 14px 40px}
+h2{margin:28px 0 0;font-size:22px;color:var(--acc);border-bottom:2px solid var(--acc);padding-bottom:4px}
+h3{margin:18px 0 6px;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
+.item{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px}
+.row{display:flex;justify-content:space-between;gap:10px;font-weight:bold}
+.price{color:var(--acc);white-space:nowrap}
+.meta{font-size:13px;color:var(--mut);margin-top:2px}
+.note{font-size:14px;margin-top:2px;font-style:italic}
+footer{text-align:center;color:var(--mut);font-size:12px;padding:0 14px 30px}
+</style>
+</head>
+<body>
+<header><h1>Spirits List</h1><p>Prices per 30ml pour unless noted</p></header>
+<div class="bar"><input id="q" type="search" placeholder="Search a spirit or flavour…"><div class="chips" id="chips"></div></div>
+<main id="list"></main>
+<footer>Please drink responsibly.</footer>
+<script>
+// name|country|style|age|year|price|flavour
+const D=`Bruichladdich Classic Laddie|Scotland|Islay||| 16|Barley, honey, sea salt
+Bruichladdich 18|Scotland|Islay|18||55|Orchard fruit, toffee, oak
+Lagavulin 12|Scotland|Islay|12||30|Smoke, brine, dry spice
+Lagavulin 16|Scotland|Islay|16||33|Rich peat, sherry, dried fruit
+Lagavulin Don Julio Finish|Scotland|Islay|||55|Smoke, agave sweetness
+Caol Ila 12|Scotland|Islay|12||16|Light peat, lemon, brine
+Ardbeg 10|Scotland|Islay|10||19|Bold smoke, citrus, tar
+Bunnahabhain 18|Scotland|Islay|18||37|Sherry, nuts, sea air
+Macallan Double Cask 12|Scotland|Speyside|12||18|Honey, vanilla, ginger
+Macallan Sherry Cask 12|Scotland|Speyside|12||19|Dried fruit, spice, oak
+Macallan Double Cask 15|Scotland|Speyside|15||36|Citrus, caramel, cinnamon
+Macallan Double Cask 18|Scotland|Speyside|18||68|Orange peel, vanilla, spice
+Macallan Sherry Cask 18|Scotland|Speyside|18||83|Raisin, dark chocolate, ginger
+Balvenie 14|Scotland|Speyside|14||25|Rum cask, toffee, stone fruit
+Singleton 12|Scotland|Speyside|12||13|Apple, malt, light oak
+Mortlach 20|Scotland|Speyside|20||58|Rich, meaty, sherried
+Mortlach Special Edition|Scotland|Speyside|||55|Dark fruit, spice, cocoa
+Roseisle 23 Special Release|Scotland|Speyside|23|2023|22|Soft smoke, honey, fruit
+Highland Park 12|Scotland|Islands|12||15|Heather honey, gentle smoke
+Highland Park Cask Strength|Scotland|Islands|||30|Rich, smoky, full-bodied
+Talisker 10|Scotland|Islands|10||17|Pepper, brine, smoke
+Glenkinchie 27|Scotland|Lowland|27||85|Floral, soft, aged oak
+Johnnie Walker Black Label|Scotland|Blended Scotch|12||14|Smoky, smooth, raisin
+Johnnie Walker Ruby|Scotland|Blended Scotch|||17|Red fruit, light smoke
+Johnnie Walker Blue Label|Scotland|Blended Scotch|||56|Silky, honey, smoke
+Naked Malt|Scotland|Blended Scotch|||13|Sherry, vanilla, easy-drinking
+Yamazaki Distiller’s Reserve|Japan|Single Malt|||28|Peach, vanilla, mizunara
+Yamazaki 18|Japan|Single Malt|18||150|Dark fruit, incense, spice
+Hakushu Single Malt|Japan|Single Malt|||23|Fresh herbs, green apple, light smoke
+Hakushu 18|Japan|Single Malt|18||190|Smoky, deep, fruit
+Yoichi Single Malt|Japan|Single Malt|||32|Smoke, malt, brine
+Nikka Yoichi|Japan|Single Malt|||23|Peat, malt, coastal
+Nikka Miyagikyo|Japan|Single Malt|||32|Fruity, floral, soft
+Akkeshi Single Malt|Japan|Single Malt|||160|Peat, brine, rare
+Kanosuke Single Malt|Japan|Single Malt|||20|Peach, honey, gentle smoke
+Suntory Chita|Japan|Single Grain|||19|Light, creamy, soft vanilla
+Hibiki Harmony|Japan|Blended|||50|Floral, honey, mellow
+Hibiki Harmony Master Select|Japan|Blended|||45|Floral, orange peel, soft oak
+Hibiki 21|Japan|Blended|21||200|Honey, dark fruit, sandalwood
+Suntory Toki|Japan|Blended|||13|Light, citrus, mint
+Suntory Royal|Japan|Blended|||23|Rounded, sweet, sherried
+Suntory AO|Japan|Blended|||23|World blend, smoky, malty
+Nikka from the Barrel|Japan|Blended|||19|Bold, spicy, rich
+Nikka Grand Age|Japan|Blended|||185|Rare, silky, layered
+Togouchi 9|Japan|Blended|9||36|Soft, grain, light oak
+Togouchi 15|Japan|Blended|15||58|Smooth, vanilla, dried fruit
+Kurayoshi Sherry Cask|Japan|Craft & Limited|||20|Sherry, nuts, fruit
+Kurayoshi Year of the Dragon|Japan|Craft & Limited||2024|67|Limited release, rich, spiced
+Kura The Classic|Japan|Craft & Limited|||25|Gentle, malty, smooth
+Koshi-No Shinobu 10|Japan|Craft & Limited|10||32|Soft fruit, oak, spice
+Koshi-No Shinobu Mazurka Wood|Japan|Craft & Limited|||20|Spice, oak, sweetness
+Komagotake|Japan|Craft & Limited||2023|54|Malty, fruity, warm
+Tsunuki|Japan|Craft & Limited||2024|63|Fresh, fruity, peaty edge
+Yamazakura Asaka|Japan|Craft & Limited||2023|50|Soft, floral, honey
+Yuza Distillery Spring|Japan|Craft & Limited||2024|61|Delicate, fruity, clean
+Kumano Mizunara|Japan|Craft & Limited|||25|Sandalwood, coconut, spice
+The Matsui|Japan|Craft & Limited|||14|Smooth, malty, light
+Buffalo Trace|USA|Bourbon|||13|Caramel, vanilla, mint
+Eagle Rare|USA|Bourbon|10||15|Toffee, orange, oak
+Woodford Reserve|USA|Bourbon|||14|Dried fruit, spice, cocoa
+Maker’s Mark|USA|Bourbon|||13|Sweet, caramel, soft wheat
+Russell’s Reserve|USA|Bourbon|10||16|Vanilla, spice, honey
+Bullet Bourbon|USA|Bourbon|||13|Spicy, corn, vanilla
+Jim Beam|USA|Bourbon|||13|Vanilla, oak, easy
+Michter’s Sour Mash|USA|Bourbon|||23|Smooth, fruit, spice
+Bib & Tucker Small Batch|USA|Bourbon|6||25|Caramel, pepper, oak
+Whistle Pig Bourbon|USA|Bourbon|6||17|Rich, oaky, toffee
+Jack Daniel’s|USA|Tennessee|||14|Banana, caramel, charcoal
+Jack Daniel’s Single Barrel|USA|Tennessee|||16|Bold, vanilla, spice
+Rittenhouse Rye|USA|Rye|||17|Spicy, bold, cherry
+Knob Creek Rye|USA|Rye|||18|Pepper, cinnamon, oak
+Whistle Pig Rye 6|USA|Rye|6||17|Spicy, herbal, caramel
+Whistle Pig Rye 15|USA|Rye|15||50|Rich, oaky, baking spice
+Whistle Pig Rye 18|USA|Rye|18||80|Deep, complex, honeyed
+Jameson|Ireland|Irish|||13|Smooth, light, vanilla
+Bushmills|Ireland|Irish|||13|Honey, malt, fruit
+Roe & Co Blended|Ireland|Irish|||14|Fruity, vanilla, spice
+Green Spot|Ireland|Irish|||15|Creamy, spice, apple
+Connemara|Ireland|Irish|||15|Peated, honey, malt
+Redbreast 12|Ireland|Irish|12||18|Pot still, sherry, spice
+Redbreast 27|Ireland|Irish|27||100|Rich, dried fruit, silky
+Starward Solera|Australia|Australian|||23|Red wine cask, plum, spice
+Starward Fortis|Australia|Australian|||20|Bold, dark fruit, oak
+Archie Rose Single Malt|Australia|Australian|||15|Malty, fruity, toasty
+Gospel Rye|Australia|Australian|||14|Spicy rye, vanilla, caramel
+Mackmyra Svensk Ek|Sweden|Swedish|||18|Swedish oak, spice, fruit
+Teremana Blanco|Tequila & Mezcal|Blanco|||14|Citrus, agave, pepper
+Herradura Blanco|Tequila & Mezcal|Blanco|||14|Fresh agave, citrus
+Olmeca Altos|Tequila & Mezcal|Blanco|||14|Peppery, citrus, crisp
+El Jimador|Tequila & Mezcal|Blanco|||13|Clean, grassy, light
+Pueblo Viejo|Tequila & Mezcal|Blanco|||13|Peppery, bright, earthy
+Patrón Silver|Tequila & Mezcal|Blanco|||17|Smooth, citrus, sweet agave
+Don Julio Blanco|Tequila & Mezcal|Blanco|||20|Crisp, lime, pepper
+Mijenta Blanco|Tequila & Mezcal|Blanco|||22|Floral, citrus, soft
+Fortaleza Blanco|Tequila & Mezcal|Blanco|||25|Cooked agave, olive, herbal
+Teremana Reposado|Tequila & Mezcal|Reposado|||16|Vanilla, caramel, agave
+Herradura Reposado|Tequila & Mezcal|Reposado|||16|Vanilla, oak, spice
+Pueblo Viejo Reposado|Tequila & Mezcal|Reposado|||18|Oak, honey, pepper
+Mijenta Reposado|Tequila & Mezcal|Reposado|||24|Vanilla, orange, soft oak
+Don Julio Reposado|Tequila & Mezcal|Reposado|||25|Caramel, oak, agave
+Fortaleza Reposado|Tequila & Mezcal|Reposado|||32|Butterscotch, herbal, rich
+Don Julio Rosado|Tequila & Mezcal|Reposado|||36|Red wine cask, berry, spice
+Herradura Añejo|Tequila & Mezcal|Añejo|||18|Toffee, oak, dried fruit
+Teremana Añejo|Tequila & Mezcal|Añejo|||25|Caramel, vanilla, spice
+Don Julio Añejo|Tequila & Mezcal|Añejo|||30|Rich, vanilla, almond
+Don Julio 1942|Tequila & Mezcal|Añejo|||48|Toffee, chocolate, roasted agave
+Don Julio Ultima Reserva|Tequila & Mezcal|Extra Añejo|||72|Deep, oaky, dark chocolate
+Del Maguey Vida|Tequila & Mezcal|Mezcal & Flavoured|||18|Smoky, fruity, bright
+Siete Misterios Espadín|Tequila & Mezcal|Mezcal & Flavoured|||22|Smoke, earth, citrus
+Del Maguey Chichicapa|Tequila & Mezcal|Mezcal & Flavoured|||25|Mineral, fruit, soft smoke
+1800 Coconut|Tequila & Mezcal|Mezcal & Flavoured|||15|Sweet coconut, vanilla
+Archie Rose Straight Dry|Gin|Australian|||14|Juniper, citrus, clean
+Bellicose|Gin|Australian|||14|Juniper, spice, fresh
+Gin Damaged Goods|Gin|Australian|||13|Juniper, citrus, dry
+Old Youngs 1829|Gin|Australian|||14|Juniper, herbal, crisp
+Republic of Fremantle|Gin|Australian|||15|Coastal, citrus, juniper
+Never Never Triple Juniper|Gin|Australian|||15|Piney, bold, juniper-forward
+Four Pillars Australian|Gin|Australian|||16|Orange, spice, juniper
+Four Pillars Navy Strength|Gin|Australian|||16|Bold, citrus, spice
+Archie Rose Signature Dry|Gin|Australian|||17|Native botanicals, citrus
+West Winds Cutlass|Gin|Australian|||17|Peppery, bold, spiced
+Four Pillars Rare Dry|Gin|Australian|||18|Orange, juniper, warm spice
+Australian Distilling Co Navy|Gin|Australian|||18|Strong, juniper, citrus
+Four Pillars Bloody Shiraz|Gin|Australian|||19|Berry, juniper, wine-soft
+Papa Salt|Gin|Australian|||20|Coastal, citrus, herbal
+Bombay Sapphire|Gin|International|||13|Juniper, citrus, light spice
+Hayman’s Sloe|Gin|International|||13|Sloe berry, sweet, almond
+Aviation|Gin|International|||14|Lavender, citrus, juniper
+Sipsmith|Gin|International|||14|Dry, juniper, lemon
+Martin Miller’s|Gin|International|||16|Cucumber, citrus, smooth
+Botanist|Gin|International|||17|Floral, herbal, Islay botanicals
+Tanqueray 10|Gin|International|||18|Grapefruit, camomile, juniper
+Hendrick’s|Gin|International|||19|Cucumber, rose, juniper
+Monkey 47|Gin|International|||19|Complex, floral, spiced
+Martin Miller’s Westbourne|Gin|International|||20|Strong, juniper, citrus
+Roku|Gin|Japanese|||16|Sakura, yuzu, sencha
+Ki No Tea|Gin|Japanese|||20|Green tea, bamboo, juniper
+El Dorado 3|Rum|White & Light|3||14|Light, sweet, fresh
+Havana Club 3|Rum|White & Light|3||13|Light, citrus, dry
+Sagatiba (Cachaça)|Rum|White & Light|||13|Grassy, sugarcane, fresh
+Appleton Signature|Rum|Aged & Dark|||13|Orange peel, spice, molasses
+Mount Gay Eclipse|Rum|Aged & Dark|||16|Banana, vanilla, caramel
+El Dorado 15|Rum|Aged & Dark|15||21|Toffee, dried fruit, oak
+Zacapa Centenario|Rum|Aged & Dark|||22|Rich, sweet, dark sugar
+Sailor Jerry|Rum|Spiced & Flavoured|||12|Vanilla, cinnamon, spice
+Ratu Spiced|Rum|Spiced & Flavoured|||14|Warm spice, coconut, honey
+Plantation Pineapple|Rum|Spiced & Flavoured|||16|Roasted pineapple, vanilla
+Ketel One|Vodka|Classic|||13|Clean, crisp, soft
+House Vodka|Vodka|Classic|||13|Clean, smooth, neutral
+Haku|Vodka|Classic|||14|Japanese rice, soft, subtle
+Belvedere Pure|Vodka|Classic|||15|Rye, creamy, smooth
+Old Youngs Pure|Vodka|Classic|||15|Clean, smooth, crisp
+Grey Goose|Vodka|Classic|||17|Soft, wheat, silky
+Belvedere Lake Bartezek|Vodka|Classic|||18|Single estate, creamy, vanilla
+Belvedere X|Vodka|Classic|||55|Premium, silky, rich
+Zubrówka Bison Grass|Vodka|Flavoured|||15|Herbal, vanilla, almond
+Hennessy VS|Brandy & Cognac|Cognac|||14|Fruity, oak, spice
+Hennessy VSOP|Brandy & Cognac|Cognac|||18|Vanilla, toffee, fruit
+Rémy Martin VSOP|Brandy & Cognac|Cognac|||19|Orchard fruit, vanilla, floral
+Rémy Martin XO|Brandy & Cognac|Cognac|||50|Dried fruit, spice, silky
+Hennessy XO|Brandy & Cognac|Cognac|||52|Rich, spiced, cocoa
+Louis XIII|Brandy & Cognac|Cognac||15ml pour|220|Rare, floral, honeyed
+Louis XIII|Brandy & Cognac|Cognac||30ml pour|450|Rare, floral, honeyed
+Richard Hennessy|Brandy & Cognac|Cognac|||988|Ultra-rare, deep, complex
+St Remy|Brandy & Cognac|Brandy|||15|Smooth, fruit, vanilla
+Aperol|Liqueurs & Aperitivo|Bitter & Aperitivo||60ml pour|13|Orange, rhubarb, bittersweet
+Campari|Liqueurs & Aperitivo|Bitter & Aperitivo||60ml pour|13|Bitter orange, herbal
+Suze|Liqueurs & Aperitivo|Bitter & Aperitivo||60ml pour|12|Gentian, earthy, bitter
+Montenegro|Liqueurs & Aperitivo|Bitter & Aperitivo|||13|Orange, floral, bittersweet
+Averna|Liqueurs & Aperitivo|Bitter & Aperitivo|||13|Caramel, citrus, herbal
+Cynar|Liqueurs & Aperitivo|Bitter & Aperitivo|||12|Artichoke, bitter, earthy
+Fernet-Branca|Liqueurs & Aperitivo|Bitter & Aperitivo|||13|Mint, menthol, bitter
+Pernod|Liqueurs & Aperitivo|Herbal & Anise||60ml pour|15|Aniseed, licorice, herbal
+Chartreuse Yellow|Liqueurs & Aperitivo|Herbal & Anise|||15|Honeyed, saffron, herbal
+Chartreuse Green|Liqueurs & Aperitivo|Herbal & Anise|||19|Intense, herbal, sweet
+Dom Bénédictine|Liqueurs & Aperitivo|Herbal & Anise||60ml pour|17|Honey, spice, herbs
+Drambuie|Liqueurs & Aperitivo|Herbal & Anise|||15|Honey, whisky, spice
+Cointreau|Liqueurs & Aperitivo|Sweet Liqueurs|||12|Orange peel, clean, dry
+Grand Marnier|Liqueurs & Aperitivo|Sweet Liqueurs|||13|Orange, cognac, vanilla
+Tia Maria|Liqueurs & Aperitivo|Sweet Liqueurs|||12|Coffee, vanilla, sweet
+Fireball|Liqueurs & Aperitivo|Sweet Liqueurs|||14|Cinnamon, sweet heat
+Cherry Heering|Liqueurs & Aperitivo|Sweet Liqueurs|||14|Dark cherry, almond
+Disaronno|Liqueurs & Aperitivo|Sweet Liqueurs|||15|Almond, apricot, sweet
+Frangelico|Liqueurs & Aperitivo|Sweet Liqueurs||60ml pour|13|Hazelnut, cocoa, vanilla
+Licor 43|Liqueurs & Aperitivo|Sweet Liqueurs||60ml pour|15|Vanilla, citrus, sweet
+Luxardo Maraschino|Liqueurs & Aperitivo|Sweet Liqueurs||60ml pour|15|Cherry, almond, dry
+Chambord|Liqueurs & Aperitivo|Sweet Liqueurs||60ml pour|16|Raspberry, blackberry
+Midori|Liqueurs & Aperitivo|Sweet Liqueurs||60ml pour|12|Melon, sweet, fruity
+Rhubi Mistelle|Liqueurs & Aperitivo|Sweet Liqueurs||60ml pour|12|Rhubarb, tart, sweet
+Umenoyado Lychee|Liqueurs & Aperitivo|Japanese Fruit Liqueur||60ml pour|15|Lychee, floral, sweet
+Umenoyado Mandarin|Liqueurs & Aperitivo|Japanese Fruit Liqueur||60ml pour|15|Mandarin, bright, sweet
+Umenoyado Mango|Liqueurs & Aperitivo|Japanese Fruit Liqueur||60ml pour|15|Ripe mango, tropical
+Umenoyado Peach|Liqueurs & Aperitivo|Japanese Fruit Liqueur||60ml pour|15|Juicy peach, soft
+Umenoyado Yuzu Aragoshi|Liqueurs & Aperitivo|Japanese Fruit Liqueur||60ml pour|15|Yuzu, tangy, fresh
+Umenoyado Plum Aragoshi|Liqueurs & Aperitivo|Japanese Fruit Liqueur||60ml pour|15|Plum, tart, sweet
+Umenoyado Green Tea Umeshu|Liqueurs & Aperitivo|Japanese Fruit Liqueur||60ml pour|15|Plum, green tea, mellow
+Nishiyama Grape|Liqueurs & Aperitivo|Japanese Fruit Liqueur||60ml pour|15|Grape, juicy, sweet
+Kikusui Apple Aragoshi|Liqueurs & Aperitivo|Japanese Fruit Liqueur||60ml pour|15|Crisp apple, sweet
+Meiri Grapefruit|Liqueurs & Aperitivo|Japanese Fruit Liqueur||60ml pour|15|Grapefruit, tangy, fresh
+Dolin Dry|Vermouth|Vermouth||60ml pour|12|Dry, herbal, floral
+Dolin Rouge|Vermouth|Vermouth||60ml pour|12|Sweet, herbal, spiced
+Noilly Prat|Vermouth|Vermouth||60ml pour|12|Dry, nutty, herbal
+Lillet Blanc|Vermouth|Vermouth||60ml pour|12|Honey, orange, floral
+Carpano Antica Formula|Vermouth|Vermouth||60ml pour|16|Vanilla, rich, bittersweet`;
+const W=["Scotland","Japan","USA","Ireland","Australia","Sweden"];
+const rows=D.split("\n").map(l=>{const p=l.split("|").map(s=>s.trim());const w=W.includes(p[1]);return{n:p[0],c:w?"Whisk(e)y":p[1],s:w?(["Australia","Sweden"].includes(p[1])?p[1]:p[1]+" · "+p[2]):p[2],a:p[3],y:p[4],p:p[5],f:p[6]}});
+rows.forEach(r=>{r.b=r.n.startsWith("Yoichi")?"Nikka":r.n.startsWith("The ")?"Matsui":r.n.startsWith("Gin ")?"Damaged":r.n.startsWith("Richard")?"Hennessy":r.n.split(" ")[0];if(r.y==="60ml pour"&&r.s!=="Japanese Fruit Liqueur")r.y=""});
+const order=["Whisk(e)y","Tequila & Mezcal","Gin","Rum","Vodka","Brandy & Cognac","Liqueurs & Aperitivo","Vermouth"];
+let cur="All";
+const chips=document.getElementById("chips"),q=document.getElementById("q"),list=document.getElementById("list");
+["All",...order].forEach(c=>{const b=document.createElement("button");b.textContent=c;b.onclick=()=>{cur=c;render()};chips.appendChild(b)});
+function render(){
+  [...chips.children].forEach(b=>b.classList.toggle("on",b.textContent===cur));
+  const t=q.value.toLowerCase();let h="";
+  order.forEach(c=>{
+    if(cur!=="All"&&cur!==c)return;
+    const rs=rows.filter(r=>r.c===c&&(r.n+r.f+r.s).toLowerCase().includes(t));
+    if(!rs.length)return;
+    h+="<h2>"+c+"</h2>";
+    [...new Set(rs.map(r=>r.s))].forEach(s=>{
+      h+="<h3>"+s+"</h3>";
+      rs.filter(r=>r.s===s).sort((a,b)=>a.b.localeCompare(b.b)||a.p-b.p).forEach(r=>{
+        const m=[r.a?r.a+" years":"",r.y?r.y:""].filter(Boolean).join(" · ");
+        h+='<div class="item"><div class="row"><span>'+r.n+'</span><span class="price">$'+r.p+'</span></div>'+(m?'<div class="meta">'+m+'</div>':"")+'<div class="note">'+r.f+'</div></div>';
+      });
+    });
+  });
+  list.innerHTML=h||"<p>No matches.</p>";
+}
+q.oninput=render;render();
+</script>
+</body>
+</html>
